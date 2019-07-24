@@ -4310,6 +4310,10 @@ function _Browser_load(url)
 		}
 	}));
 }
+var author$project$Picshare$Model = F3(
+	function (url, caption, liked) {
+		return {caption: caption, liked: liked, url: url};
+	});
 var author$project$Picshare$baseUrl = 'https://programming-elm.com/';
 var elm$core$Basics$False = {$: 'False'};
 var elm$core$Elm$JsArray$foldr = _JsArray_foldr;
@@ -4393,25 +4397,19 @@ var elm$core$Set$toList = function (_n0) {
 	return elm$core$Dict$keys(dict);
 };
 var elm$core$Basics$append = _Utils_append;
-var author$project$Picshare$initialModel = {caption: 'Surfing', liked: false, url: author$project$Picshare$baseUrl + '1.jpg'};
-var elm$core$Basics$True = {$: 'True'};
+var author$project$Picshare$initialModel = A3(author$project$Picshare$Model, author$project$Picshare$baseUrl + '1.jpg', 'Surfing', false);
+var elm$core$Basics$not = _Basics_not;
 var author$project$Picshare$update = F2(
 	function (msg, model) {
-		if (msg.$ === 'Like') {
-			return _Utils_update(
-				model,
-				{liked: true});
-		} else {
-			return _Utils_update(
-				model,
-				{liked: false});
-		}
+		return _Utils_update(
+			model,
+			{liked: !model.liked});
 	});
-var author$project$Picshare$Like = {$: 'Like'};
-var author$project$Picshare$Unlike = {$: 'Unlike'};
+var author$project$Picshare$ToggleLike = {$: 'ToggleLike'};
 var elm$core$Basics$identity = function (x) {
 	return x;
 };
+var elm$core$Basics$True = {$: 'True'};
 var elm$core$Result$isOk = function (result) {
 	if (result.$ === 'Ok') {
 		return true;
@@ -4820,11 +4818,7 @@ var elm$virtual_dom$VirtualDom$toHandlerInt = function (handler) {
 	}
 };
 var elm$html$Html$div = _VirtualDom_node('div');
-var elm$html$Html$h2 = _VirtualDom_node('h2');
 var elm$html$Html$i = _VirtualDom_node('i');
-var elm$html$Html$img = _VirtualDom_node('img');
-var elm$virtual_dom$VirtualDom$text = _VirtualDom_text;
-var elm$html$Html$text = elm$virtual_dom$VirtualDom$text;
 var elm$json$Json$Encode$string = _Json_wrap;
 var elm$html$Html$Attributes$stringProperty = F2(
 	function (key, string) {
@@ -4834,12 +4828,6 @@ var elm$html$Html$Attributes$stringProperty = F2(
 			elm$json$Json$Encode$string(string));
 	});
 var elm$html$Html$Attributes$class = elm$html$Html$Attributes$stringProperty('className');
-var elm$html$Html$Attributes$src = function (url) {
-	return A2(
-		elm$html$Html$Attributes$stringProperty,
-		'src',
-		_VirtualDom_noJavaScriptOrHtmlUri(url));
-};
 var elm$virtual_dom$VirtualDom$Normal = function (a) {
 	return {$: 'Normal', a: a};
 };
@@ -4857,9 +4845,38 @@ var elm$html$Html$Events$onClick = function (msg) {
 		'click',
 		elm$json$Json$Decode$succeed(msg));
 };
-var author$project$Picshare$viewDetailedPhoto = function (model) {
-	var msg = model.liked ? author$project$Picshare$Unlike : author$project$Picshare$Like;
+var author$project$Picshare$viewLoveButton = function (model) {
 	var buttonClass = model.liked ? 'fa-heart' : 'fa-heart-o';
+	return A2(
+		elm$html$Html$div,
+		_List_fromArray(
+			[
+				elm$html$Html$Attributes$class('like-button')
+			]),
+		_List_fromArray(
+			[
+				A2(
+				elm$html$Html$i,
+				_List_fromArray(
+					[
+						elm$html$Html$Attributes$class('fa fa-2x'),
+						elm$html$Html$Attributes$class(buttonClass),
+						elm$html$Html$Events$onClick(author$project$Picshare$ToggleLike)
+					]),
+				_List_Nil)
+			]));
+};
+var elm$html$Html$h2 = _VirtualDom_node('h2');
+var elm$html$Html$img = _VirtualDom_node('img');
+var elm$virtual_dom$VirtualDom$text = _VirtualDom_text;
+var elm$html$Html$text = elm$virtual_dom$VirtualDom$text;
+var elm$html$Html$Attributes$src = function (url) {
+	return A2(
+		elm$html$Html$Attributes$stringProperty,
+		'src',
+		_VirtualDom_noJavaScriptOrHtmlUri(url));
+};
+var author$project$Picshare$viewDetailedPhoto = function (model) {
 	return A2(
 		elm$html$Html$div,
 		_List_fromArray(
@@ -4883,24 +4900,7 @@ var author$project$Picshare$viewDetailedPhoto = function (model) {
 					]),
 				_List_fromArray(
 					[
-						A2(
-						elm$html$Html$div,
-						_List_fromArray(
-							[
-								elm$html$Html$Attributes$class('like-button')
-							]),
-						_List_fromArray(
-							[
-								A2(
-								elm$html$Html$i,
-								_List_fromArray(
-									[
-										elm$html$Html$Attributes$class('fa fa-2x'),
-										elm$html$Html$Attributes$class(buttonClass),
-										elm$html$Html$Events$onClick(msg)
-									]),
-								_List_Nil)
-							])),
+						author$project$Picshare$viewLoveButton(model),
 						A2(
 						elm$html$Html$h2,
 						_List_fromArray(
