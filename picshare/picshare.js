@@ -5897,14 +5897,25 @@ var author$project$Picshare$fetchFeed = elm$http$Http$get(
 			elm$json$Json$Decode$list(author$project$Picshare$photoDecoder)),
 		url: author$project$Picshare$baseUrl + 'feed'
 	});
-var author$project$Picshare$initialModel = {error: elm$core$Maybe$Nothing, feed: elm$core$Maybe$Nothing};
+var author$project$Picshare$initialModel = {error: elm$core$Maybe$Nothing, feed: elm$core$Maybe$Nothing, streamQueue: _List_Nil};
 var author$project$Picshare$init = function (_n0) {
 	return _Utils_Tuple2(author$project$Picshare$initialModel, author$project$Picshare$fetchFeed);
 };
-var elm$core$Platform$Sub$batch = _Platform_batch;
-var elm$core$Platform$Sub$none = elm$core$Platform$Sub$batch(_List_Nil);
+var author$project$Picshare$LoadStreamPhoto = function (a) {
+	return {$: 'LoadStreamPhoto', a: a};
+};
+var author$project$WebSocket$receive = _Platform_incomingPort('receive', elm$json$Json$Decode$string);
+var elm$core$Basics$composeL = F3(
+	function (g, f, x) {
+		return g(
+			f(x));
+	});
 var author$project$Picshare$subscriptions = function (model) {
-	return elm$core$Platform$Sub$none;
+	return author$project$WebSocket$receive(
+		A2(
+			elm$core$Basics$composeL,
+			author$project$Picshare$LoadStreamPhoto,
+			elm$json$Json$Decode$decodeString(author$project$Picshare$photoDecoder)));
 };
 var elm$core$String$trim = _String_trim;
 var author$project$Picshare$saveNewComment = function (photo) {
@@ -5975,6 +5986,9 @@ var author$project$Picshare$updateFeed = F3(
 			A2(author$project$Picshare$updatePhotoById, updatePhoto, id),
 			maybeFeed);
 	});
+var author$project$Picshare$wsUrl = 'wss://programming-elm.com/';
+var elm$json$Json$Encode$string = _Json_wrap;
+var author$project$WebSocket$listen = _Platform_outgoingPort('listen', elm$json$Json$Encode$string);
 var elm$core$Platform$Cmd$batch = _Platform_batch;
 var elm$core$Platform$Cmd$none = elm$core$Platform$Cmd$batch(_List_Nil);
 var author$project$Picshare$update = F2(
@@ -6012,7 +6026,7 @@ var author$project$Picshare$update = F2(
 							feed: A3(author$project$Picshare$updateFeed, author$project$Picshare$saveNewComment, id, model.feed)
 						}),
 					elm$core$Platform$Cmd$none);
-			default:
+			case 'LoadFeed':
 				if (msg.a.$ === 'Ok') {
 					var feed = msg.a.a;
 					return _Utils_Tuple2(
@@ -6021,7 +6035,7 @@ var author$project$Picshare$update = F2(
 							{
 								feed: elm$core$Maybe$Just(feed)
 							}),
-						elm$core$Platform$Cmd$none);
+						author$project$WebSocket$listen(author$project$Picshare$wsUrl));
 				} else {
 					var error = msg.a.a;
 					return _Utils_Tuple2(
@@ -6032,6 +6046,31 @@ var author$project$Picshare$update = F2(
 							}),
 						elm$core$Platform$Cmd$none);
 				}
+			case 'LoadStreamPhoto':
+				if (msg.a.$ === 'Ok') {
+					var photo = msg.a.a;
+					return _Utils_Tuple2(
+						_Utils_update(
+							model,
+							{
+								streamQueue: A2(elm$core$List$cons, photo, model.streamQueue)
+							}),
+						elm$core$Platform$Cmd$none);
+				} else {
+					return _Utils_Tuple2(model, elm$core$Platform$Cmd$none);
+				}
+			default:
+				return _Utils_Tuple2(
+					_Utils_update(
+						model,
+						{
+							feed: A2(
+								elm$core$Maybe$map,
+								elm$core$Basics$append(model.streamQueue),
+								model.feed),
+							streamQueue: _List_Nil
+						}),
+					elm$core$Platform$Cmd$none);
 		}
 	});
 var author$project$Picshare$errorMessage = function (error) {
@@ -6083,7 +6122,6 @@ var author$project$Picshare$viewComment = function (comment) {
 };
 var elm$html$Html$div = _VirtualDom_node('div');
 var elm$html$Html$ul = _VirtualDom_node('ul');
-var elm$json$Json$Encode$string = _Json_wrap;
 var elm$html$Html$Attributes$stringProperty = F2(
 	function (key, string) {
 		return A2(
@@ -6334,6 +6372,26 @@ var author$project$Picshare$viewFeed = function (maybeFeed) {
 				]));
 	}
 };
+var author$project$Picshare$FlushStreamQueue = {$: 'FlushStreamQueue'};
+var author$project$Picshare$viewStreamNotification = function (queue) {
+	if (!queue.b) {
+		return elm$html$Html$text('');
+	} else {
+		var content = 'View new photos: ' + elm$core$String$fromInt(
+			elm$core$List$length(queue));
+		return A2(
+			elm$html$Html$div,
+			_List_fromArray(
+				[
+					elm$html$Html$Attributes$class('stream-notification'),
+					elm$html$Html$Events$onClick(author$project$Picshare$FlushStreamQueue)
+				]),
+			_List_fromArray(
+				[
+					elm$html$Html$text(content)
+				]));
+	}
+};
 var author$project$Picshare$viewContent = function (model) {
 	var _n0 = model.error;
 	if (_n0.$ === 'Just') {
@@ -6350,7 +6408,14 @@ var author$project$Picshare$viewContent = function (model) {
 					author$project$Picshare$errorMessage(error))
 				]));
 	} else {
-		return author$project$Picshare$viewFeed(model.feed);
+		return A2(
+			elm$html$Html$div,
+			_List_Nil,
+			_List_fromArray(
+				[
+					author$project$Picshare$viewStreamNotification(model.streamQueue),
+					author$project$Picshare$viewFeed(model.feed)
+				]));
 	}
 };
 var elm$html$Html$h1 = _VirtualDom_node('h1');
