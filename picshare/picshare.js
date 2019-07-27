@@ -5891,10 +5891,13 @@ var elm$http$Http$get = function (r) {
 };
 var author$project$Picshare$fetchFeed = elm$http$Http$get(
 	{
-		expect: A2(elm$http$Http$expectJson, author$project$Picshare$LoadFeed, author$project$Picshare$photoDecoder),
-		url: author$project$Picshare$baseUrl + 'feed/2'
+		expect: A2(
+			elm$http$Http$expectJson,
+			author$project$Picshare$LoadFeed,
+			elm$json$Json$Decode$list(author$project$Picshare$photoDecoder)),
+		url: author$project$Picshare$baseUrl + 'feed'
 	});
-var author$project$Picshare$initialModel = {photo: elm$core$Maybe$Nothing};
+var author$project$Picshare$initialModel = {error: elm$core$Maybe$Nothing, feed: elm$core$Maybe$Nothing};
 var author$project$Picshare$init = function (_n0) {
 	return _Utils_Tuple2(author$project$Picshare$initialModel, author$project$Picshare$fetchFeed);
 };
@@ -5932,6 +5935,29 @@ var author$project$Picshare$updateComment = F2(
 			photo,
 			{newComment: comment});
 	});
+var elm$core$List$map = F2(
+	function (f, xs) {
+		return A3(
+			elm$core$List$foldr,
+			F2(
+				function (x, acc) {
+					return A2(
+						elm$core$List$cons,
+						f(x),
+						acc);
+				}),
+			_List_Nil,
+			xs);
+	});
+var author$project$Picshare$updatePhotoById = F3(
+	function (updatePhoto, id, feed) {
+		return A2(
+			elm$core$List$map,
+			function (photo) {
+				return _Utils_eq(photo.id, id) ? updatePhoto(photo) : photo;
+			},
+			feed);
+	});
 var elm$core$Maybe$map = F2(
 	function (f, maybe) {
 		if (maybe.$ === 'Just') {
@@ -5942,9 +5968,12 @@ var elm$core$Maybe$map = F2(
 			return elm$core$Maybe$Nothing;
 		}
 	});
-var author$project$Picshare$updateFeed = F2(
-	function (updatePhoto, maybePhoto) {
-		return A2(elm$core$Maybe$map, updatePhoto, maybePhoto);
+var author$project$Picshare$updateFeed = F3(
+	function (updatePhoto, id, maybeFeed) {
+		return A2(
+			elm$core$Maybe$map,
+			A2(author$project$Picshare$updatePhotoById, updatePhoto, id),
+			maybeFeed);
 	});
 var elm$core$Platform$Cmd$batch = _Platform_batch;
 var elm$core$Platform$Cmd$none = elm$core$Platform$Cmd$batch(_List_Nil);
@@ -5952,52 +5981,73 @@ var author$project$Picshare$update = F2(
 	function (msg, model) {
 		switch (msg.$) {
 			case 'ToggleLike':
+				var id = msg.a;
 				return _Utils_Tuple2(
 					_Utils_update(
 						model,
 						{
-							photo: A2(author$project$Picshare$updateFeed, author$project$Picshare$toggleLike, model.photo)
+							feed: A3(author$project$Picshare$updateFeed, author$project$Picshare$toggleLike, id, model.feed)
 						}),
 					elm$core$Platform$Cmd$none);
 			case 'UpdateComment':
-				var comment = msg.a;
+				var id = msg.a;
+				var comment = msg.b;
 				return _Utils_Tuple2(
 					_Utils_update(
 						model,
 						{
-							photo: A2(
+							feed: A3(
 								author$project$Picshare$updateFeed,
 								author$project$Picshare$updateComment(comment),
-								model.photo)
+								id,
+								model.feed)
 						}),
 					elm$core$Platform$Cmd$none);
 			case 'SaveComment':
+				var id = msg.a;
 				return _Utils_Tuple2(
 					_Utils_update(
 						model,
 						{
-							photo: A2(author$project$Picshare$updateFeed, author$project$Picshare$saveNewComment, model.photo)
+							feed: A3(author$project$Picshare$updateFeed, author$project$Picshare$saveNewComment, id, model.feed)
 						}),
 					elm$core$Platform$Cmd$none);
 			default:
 				if (msg.a.$ === 'Ok') {
-					var photo = msg.a.a;
+					var feed = msg.a.a;
 					return _Utils_Tuple2(
 						_Utils_update(
 							model,
 							{
-								photo: elm$core$Maybe$Just(photo)
+								feed: elm$core$Maybe$Just(feed)
 							}),
 						elm$core$Platform$Cmd$none);
 				} else {
-					return _Utils_Tuple2(model, elm$core$Platform$Cmd$none);
+					var error = msg.a.a;
+					return _Utils_Tuple2(
+						_Utils_update(
+							model,
+							{
+								error: elm$core$Maybe$Just(error)
+							}),
+						elm$core$Platform$Cmd$none);
 				}
 		}
 	});
-var author$project$Picshare$SaveComment = {$: 'SaveComment'};
-var author$project$Picshare$UpdateComment = function (a) {
-	return {$: 'UpdateComment', a: a};
+var author$project$Picshare$errorMessage = function (error) {
+	if (error.$ === 'BadBody') {
+		return 'Sorry, we couldn\'t process your feed at this time.\n            We\'re working on it!';
+	} else {
+		return 'Sorry, we couldn\'t process your feed at this time.\n            Please try again later.';
+	}
 };
+var author$project$Picshare$SaveComment = function (a) {
+	return {$: 'SaveComment', a: a};
+};
+var author$project$Picshare$UpdateComment = F2(
+	function (a, b) {
+		return {$: 'UpdateComment', a: a, b: b};
+	});
 var elm$json$Json$Decode$map = _Json_map1;
 var elm$virtual_dom$VirtualDom$toHandlerInt = function (handler) {
 	switch (handler.$) {
@@ -6031,20 +6081,6 @@ var author$project$Picshare$viewComment = function (comment) {
 				elm$html$Html$text(' ' + comment)
 			]));
 };
-var elm$core$List$map = F2(
-	function (f, xs) {
-		return A3(
-			elm$core$List$foldr,
-			F2(
-				function (x, acc) {
-					return A2(
-						elm$core$List$cons,
-						f(x),
-						acc);
-				}),
-			_List_Nil,
-			xs);
-	});
 var elm$html$Html$div = _VirtualDom_node('div');
 var elm$html$Html$ul = _VirtualDom_node('ul');
 var elm$json$Json$Encode$string = _Json_wrap;
@@ -6159,7 +6195,8 @@ var author$project$Picshare$viewComments = function (photo) {
 				_List_fromArray(
 					[
 						elm$html$Html$Attributes$class('new-comment'),
-						elm$html$Html$Events$onSubmit(author$project$Picshare$SaveComment)
+						elm$html$Html$Events$onSubmit(
+						author$project$Picshare$SaveComment(photo.id))
 					]),
 				_List_fromArray(
 					[
@@ -6170,7 +6207,8 @@ var author$project$Picshare$viewComments = function (photo) {
 								elm$html$Html$Attributes$type_('text'),
 								elm$html$Html$Attributes$placeholder('Add a comment...'),
 								elm$html$Html$Attributes$value(photo.newComment),
-								elm$html$Html$Events$onInput(author$project$Picshare$UpdateComment)
+								elm$html$Html$Events$onInput(
+								author$project$Picshare$UpdateComment(photo.id))
 							]),
 						_List_Nil),
 						A2(
@@ -6187,7 +6225,9 @@ var author$project$Picshare$viewComments = function (photo) {
 					]))
 			]));
 };
-var author$project$Picshare$ToggleLike = {$: 'ToggleLike'};
+var author$project$Picshare$ToggleLike = function (a) {
+	return {$: 'ToggleLike', a: a};
+};
 var elm$html$Html$i = _VirtualDom_node('i');
 var elm$virtual_dom$VirtualDom$Normal = function (a) {
 	return {$: 'Normal', a: a};
@@ -6221,7 +6261,8 @@ var author$project$Picshare$viewLoveButton = function (photo) {
 					[
 						elm$html$Html$Attributes$class('fa fa-2x'),
 						elm$html$Html$Attributes$class(buttonClass),
-						elm$html$Html$Events$onClick(author$project$Picshare$ToggleLike)
+						elm$html$Html$Events$onClick(
+						author$project$Picshare$ToggleLike(photo.id))
 					]),
 				_List_Nil)
 			]));
@@ -6273,10 +6314,13 @@ var author$project$Picshare$viewDetailedPhoto = function (photo) {
 					]))
 			]));
 };
-var author$project$Picshare$viewFeed = function (maybePhoto) {
-	if (maybePhoto.$ === 'Just') {
-		var photo = maybePhoto.a;
-		return author$project$Picshare$viewDetailedPhoto(photo);
+var author$project$Picshare$viewFeed = function (maybeFeed) {
+	if (maybeFeed.$ === 'Just') {
+		var feed = maybeFeed.a;
+		return A2(
+			elm$html$Html$div,
+			_List_Nil,
+			A2(elm$core$List$map, author$project$Picshare$viewDetailedPhoto, feed));
 	} else {
 		return A2(
 			elm$html$Html$div,
@@ -6288,6 +6332,25 @@ var author$project$Picshare$viewFeed = function (maybePhoto) {
 				[
 					elm$html$Html$text('Loading Feed...')
 				]));
+	}
+};
+var author$project$Picshare$viewContent = function (model) {
+	var _n0 = model.error;
+	if (_n0.$ === 'Just') {
+		var error = _n0.a;
+		return A2(
+			elm$html$Html$div,
+			_List_fromArray(
+				[
+					elm$html$Html$Attributes$class('feed-error')
+				]),
+			_List_fromArray(
+				[
+					elm$html$Html$text(
+					author$project$Picshare$errorMessage(error))
+				]));
+	} else {
+		return author$project$Picshare$viewFeed(model.feed);
 	}
 };
 var elm$html$Html$h1 = _VirtualDom_node('h1');
@@ -6321,7 +6384,7 @@ var author$project$Picshare$view = function (model) {
 					]),
 				_List_fromArray(
 					[
-						author$project$Picshare$viewFeed(model.photo)
+						author$project$Picshare$viewContent(model)
 					]))
 			]));
 };
