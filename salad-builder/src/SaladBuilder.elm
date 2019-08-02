@@ -305,7 +305,7 @@ viewContact contact =
     div []
         [ viewTextInput "Name" contact.name SetName
         , viewTextInput "Email" contact.email SetEmail
-        , viewTextInput "Phone" contact.email SetPhone
+        , viewTextInput "Phone" contact.phone SetPhone
         ]
 
 
