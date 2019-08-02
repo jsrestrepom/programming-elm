@@ -217,151 +217,110 @@ viewError error =
             text ""
 
 
+viewSection : String -> List (Html msg) -> Html msg
+viewSection heading children =
+    section [ class "salad-section" ]
+        (h2 [] [ text heading ] :: children)
+
+
+viewRadioOption : String -> value -> (value -> msg) -> String -> value -> Html msg
+viewRadioOption radioName selectedValue tagger optionLabel value =
+    label [ class "select-option" ]
+        [ input
+            [ type_ "radio"
+            , name radioName
+            , checked (value == selectedValue)
+            , onClick (tagger value)
+            ]
+            []
+        , text optionLabel
+        ]
+
+
+viewSelectBase : Base -> Html Msg
+viewSelectBase currentBase =
+    let
+        viewBaseOption =
+            viewRadioOption "base" currentBase (SaladMsg << SetBase)
+    in
+    div []
+        [ viewBaseOption "Lettuce" Lettuce
+        , viewBaseOption "Spinach" Spinach
+        , viewBaseOption "Spring Mix" SpringMix
+        ]
+
+
+viewSelectDressing : Dressing -> Html Msg
+viewSelectDressing currentDressing =
+    let
+        viewDressingOption =
+            viewRadioOption "dressing" currentDressing (SaladMsg << SetDressing)
+    in
+    div []
+        [ viewDressingOption "None" NoDressing
+        , viewDressingOption "Italian" Italian
+        , viewDressingOption "Raspberry Vinaigrette" RaspberryVinaigrette
+        , viewDressingOption "Oil and Vinegar" OilVinegar
+        ]
+
+
+viewToppingOption : String -> Topping -> Set String -> Html Msg
+viewToppingOption toppingLabel topping toppings =
+    label [ class "select-option" ]
+        [ input
+            [ type_ "checkbox"
+            , checked (Set.member (toppingToString topping) toppings)
+            , onCheck (SaladMsg << ToggleTopping topping)
+            ]
+            []
+        , text toppingLabel
+        ]
+
+
+viewSelectToppings : Set String -> Html Msg
+viewSelectToppings toppings =
+    div []
+        [ viewToppingOption "Tomatoes" Tomatoes toppings
+        , viewToppingOption "Cucumbers" Cucumbers toppings
+        , viewToppingOption "Onions" Onions toppings
+        ]
+
+
+viewTextInput : String -> String -> (String -> msg) -> Html msg
+viewTextInput inputLabel inputValue tagger =
+    div [ class "text-input" ]
+        [ label []
+            [ div [] [ text (inputLabel ++ ":") ]
+            , input
+                [ type_ "text"
+                , value inputValue
+                , onInput tagger
+                ]
+                []
+            ]
+        ]
+
+viewContact : Contact a -> Html ContactMsg
+viewContact contact =
+    div []
+        [ viewTextInput "Name" contact.name SetName
+        , viewTextInput "Email" contact.email SetEmail
+        , viewTextInput "Phone" contact.email SetPhone
+        ]
+
+
 viewBuild : Model -> Html Msg
 viewBuild model =
     div []
         [ viewError model.error
-        , section [ class "salad-section" ]
-            [ h2 [] [ text "1. Select Base" ]
-            , label [ class "select-option" ]
-                [ input
-                    [ type_ "radio"
-                    , name "base"
-                    , checked (model.salad.base == Lettuce)
-                    , onClick (SaladMsg (SetBase Lettuce))
-                    ]
-                    []
-                , text "Lettuce"
-                ]
-            , label [ class "select-option" ]
-                [ input
-                    [ type_ "radio"
-                    , name "base"
-                    , checked (model.salad.base == Spinach)
-                    , onClick (SaladMsg (SetBase Spinach))
-                    ]
-                    []
-                , text "Spinach"
-                ]
-            , label [ class "select-option" ]
-                [ input
-                    [ type_ "radio"
-                    , name "base"
-                    , checked (model.salad.base == SpringMix)
-                    , onClick (SaladMsg (SetBase SpringMix))
-                    ]
-                    []
-                , text "Spring Mix"
-                ]
-            ]
-        , section [ class "salad-section" ]
-            [ h2 [] [ text "2. Select Toppings" ]
-            , label [ class "select-option" ]
-                [ input
-                    [ type_ "checkbox"
-                    , checked (Set.member (toppingToString Tomatoes) model.salad.toppings)
-                    , onCheck (SaladMsg << ToggleTopping Tomatoes)
-                    ]
-                    []
-                , text "Tomatoes"
-                ]
-            , label [ class "select-option" ]
-                [ input
-                    [ type_ "checkbox"
-                    , checked (Set.member (toppingToString Cucumbers) model.salad.toppings)
-                    , onCheck (SaladMsg << ToggleTopping Cucumbers)
-                    ]
-                    []
-                , text "Cucumbers"
-                ]
-            , label [ class "select-option" ]
-                [ input
-                    [ type_ "checkbox"
-                    , checked (Set.member (toppingToString Onions) model.salad.toppings)
-                    , onCheck (SaladMsg << ToggleTopping Onions)
-                    ]
-                    []
-                , text "Onions"
-                ]
-            ]
-        , section [ class "salad-section" ]
-            [ h2 [] [ text "3. Select Dressing" ]
-            , label [ class "select-option" ]
-                [ input
-                    [ type_ "radio"
-                    , name "dressing"
-                    , checked (model.salad.dressing == NoDressing)
-                    , onClick (SaladMsg (SetDressing NoDressing))
-                    ]
-                    []
-                , text "None"
-                ]
-            , label [ class "select-option" ]
-                [ input
-                    [ type_ "radio"
-                    , name "dressing"
-                    , checked (model.salad.dressing == Italian)
-                    , onClick (SaladMsg (SetDressing Italian))
-                    ]
-                    []
-                , text "Italian"
-                ]
-            , label [ class "select-option" ]
-                [ input
-                    [ type_ "radio"
-                    , name "dressing"
-                    , checked (model.salad.dressing == RaspberryVinaigrette)
-                    , onClick (SaladMsg (SetDressing RaspberryVinaigrette))
-                    ]
-                    []
-                , text "Raspberry Vinaigrette"
-                ]
-            , label [ class "select-option" ]
-                [ input
-                    [ type_ "radio"
-                    , name "dressing"
-                    , checked (model.salad.dressing == OilVinegar)
-                    , onClick (SaladMsg (SetDressing OilVinegar))
-                    ]
-                    []
-                , text "Oil and Vinegar"
-                ]
-            ]
-        , section [ class "salad-section" ]
-            [ h2 [] [ text "4. Enter Contact Info" ]
-            , div [ class "text-input" ]
-                [ label []
-                    [ div [] [ text "Name:" ]
-                    , input
-                        [ type_ "text"
-                        , value model.name
-                        , onInput (ContactMsg << SetName)
-                        ]
-                        []
-                    ]
-                ]
-            , div [ class "text-input" ]
-                [ label []
-                    [ div [] [ text "Email:" ]
-                    , input
-                        [ type_ "text"
-                        , value model.email
-                        , onInput (ContactMsg << SetEmail)
-                        ]
-                        []
-                    ]
-                ]
-            , div [ class "text-input" ]
-                [ label []
-                    [ div [] [ text "Phone:" ]
-                    , input
-                        [ type_ "text"
-                        , value model.phone
-                        , onInput (ContactMsg << SetPhone)
-                        ]
-                        []
-                    ]
-                ]
+        , viewSection "1. Select Base"
+            [ viewSelectBase model.salad.base ]
+        , viewSection "2. Select Toppings"
+            [ viewSelectToppings model.salad.toppings ]
+        , viewSection "3. Select Dressing"
+            [ viewSelectDressing model.salad.dressing ]
+        , viewSection "4. Enter Contact Info"
+            [ Html.map ContactMsg (viewContact model)
             , button
                 [ class "send-button"
                 , disabled (not (isValid model))
