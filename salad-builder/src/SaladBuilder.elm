@@ -202,8 +202,8 @@ isValid model =
 ---- VIEW ----
 
 
-viewSendig : Html msg
-viewSendig =
+viewSending : Html msg
+viewSending =
     div [ class "sending" ] [ text "Sending Order..." ]
 
 
@@ -379,7 +379,7 @@ viewStep model =
             viewBuild error model
 
         Sending ->
-            viewSendig
+            viewSending
 
         Confirmation ->
             viewConfimation model
