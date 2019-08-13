@@ -332,31 +332,24 @@ viewBuild error model =
         ]
 
 
-viewConfirmationItem : ( String, Html msg ) -> Html msg
-viewConfirmationItem ( itemLabel, itemValue ) =
+viewTableEntry : ( String, Html msg ) -> Html msg
+viewTableEntry ( header, child ) =
     tr []
-        [ th [] [ text (itemLabel ++ ":") ]
-        , td [] [ itemValue ]
+        [ th [] [ text (header ++ ":") ]
+        , td [] [ child ]
         ]
 
 
-viewTable : Model -> Html msg
-viewTable model =
+viewTable : List ( String, Html msg ) -> Html msg
+viewTable entries =
     table []
-        [ viewConfirmationItem ( "Base", text (baseToString model.salad.base) )
-        , viewConfirmationItem
-            ( "Toppings"
-            , ul []
-                (model.salad.toppings
-                    |> Set.toList
-                    |> List.map (\topping -> li [] [ text topping ])
-                )
-            )
-        , viewConfirmationItem ( "Dressing", text (dressingToString model.salad.dressing) )
-        , viewConfirmationItem ( "Name", text model.name )
-        , viewConfirmationItem ( "Email", text model.email )
-        , viewConfirmationItem ( "Phone", text model.phone )
-        ]
+        (List.map viewTableEntry entries)
+
+
+viewList : List String -> Html msg
+viewList list =
+    ul []
+        (List.map (\item -> li [] [ text item ]) list)
 
 
 viewConfirmation : Model -> Html msg
@@ -364,7 +357,14 @@ viewConfirmation model =
     div [ class "confirmation" ]
         [ h2 [] [ text "Woo hoo!" ]
         , p [] [ text "Thanks for your order!" ]
-        , viewTable model
+        , viewTable
+            [ ( "Base", text (baseToString model.salad.base) )
+            , ( "Toppings", viewList (Set.toList model.salad.toppings) )
+            , ( "Dressing", text (dressingToString model.salad.dressing) )
+            , ( "Name", text model.name )
+            , ( "Email", text model.email )
+            , ( "Phone", text model.phone )
+            ]
         ]
 
 
