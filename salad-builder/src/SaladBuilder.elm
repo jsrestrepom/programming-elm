@@ -332,43 +332,39 @@ viewBuild error model =
         ]
 
 
-viewConfimation : Model -> Html msg
-viewConfimation model =
+viewConfirmationItem : ( String, Html msg ) -> Html msg
+viewConfirmationItem ( itemLabel, itemValue ) =
+    tr []
+        [ th [] [ text (itemLabel ++ ":") ]
+        , td [] [ itemValue ]
+        ]
+
+
+viewTable : Model -> Html msg
+viewTable model =
+    table []
+        [ viewConfirmationItem ( "Base", text (baseToString model.salad.base) )
+        , viewConfirmationItem
+            ( "Toppings"
+            , ul []
+                (model.salad.toppings
+                    |> Set.toList
+                    |> List.map (\topping -> li [] [ text topping ])
+                )
+            )
+        , viewConfirmationItem ( "Dressing", text (dressingToString model.salad.dressing) )
+        , viewConfirmationItem ( "Name", text model.name )
+        , viewConfirmationItem ( "Email", text model.email )
+        , viewConfirmationItem ( "Phone", text model.phone )
+        ]
+
+
+viewConfirmation : Model -> Html msg
+viewConfirmation model =
     div [ class "confirmation" ]
         [ h2 [] [ text "Woo hoo!" ]
         , p [] [ text "Thanks for your order!" ]
-        , table []
-            [ tr []
-                [ th [] [ text "Base:" ]
-                , td [] [ text (baseToString model.salad.base) ]
-                ]
-            , tr []
-                [ th [] [ text "Toppings:" ]
-                , td []
-                    [ ul []
-                        (model.salad.toppings
-                            |> Set.toList
-                            |> List.map (\topping -> li [] [ text topping ])
-                        )
-                    ]
-                ]
-            , tr []
-                [ th [] [ text "Dressing:" ]
-                , td [] [ text (dressingToString model.salad.dressing) ]
-                ]
-            , tr []
-                [ th [] [ text "Name:" ]
-                , td [] [ text model.name ]
-                ]
-            , tr []
-                [ th [] [ text "Email:" ]
-                , td [] [ text model.email ]
-                ]
-            , tr []
-                [ th [] [ text "Phone:" ]
-                , td [] [ text model.phone ]
-                ]
-            ]
+        , viewTable model
         ]
 
 
@@ -382,7 +378,7 @@ viewStep model =
             viewSending
 
         Confirmation ->
-            viewConfimation model
+            viewConfirmation model
 
 
 view : Model -> Html Msg
